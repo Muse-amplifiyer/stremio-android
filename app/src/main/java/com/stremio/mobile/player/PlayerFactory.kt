@@ -12,7 +12,6 @@ object PlayerFactory {
             PlayerEngine.EXO -> ExoStreamPlayer(context, settings)
             PlayerEngine.MPV -> MpvStreamPlayer(context, settings)
             PlayerEngine.CAST -> CastPlayer(context)
-            PlayerEngine.FIRETV -> FireTvPlayer(context, com.stremio.mobile.firetv.FireTvManager)
         }
     }
 }

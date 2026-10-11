@@ -146,7 +146,6 @@ class PlayerControlsActions(
     val onShowAudio: () -> Unit,
     val onToggleStats: () -> Unit,
     val onPictureInPicture: () -> Unit,
-    val onFireTv: () -> Unit,
 )
 
 @Composable
@@ -424,13 +423,6 @@ fun ClassicPlayerControls(
                                 modifier = Modifier.size(44.dp),
                             )
                         }
-                        // Fire TV receiver connection.
-                        PlayerIconButton(
-                            imageVector = Icons.Outlined.Tv,
-                            contentDescription = "Fire TV",
-                            enabled = true,
-                            onClick = actions.onFireTv,
-                        )
                     }
                 }
             }

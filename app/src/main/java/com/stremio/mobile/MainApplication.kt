@@ -68,7 +68,6 @@ class MainApplication : Application(), SingletonImageLoader.Factory {
         }
         container = AppContainer(this)
         runCatching { com.stremio.mobile.cast.CastManager.init(this) }
-        runCatching { com.stremio.mobile.firetv.FireTvManager.init(this) }
         val analyticsEnabled = container.authRepository.isAnalyticsEnabled()
         FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(analyticsEnabled)
 
