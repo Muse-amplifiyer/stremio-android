@@ -74,7 +74,8 @@ android {
     signingConfigs {
         // Persistent debug keystore so APK updates work (CI runners generate
         // a different debug key each time otherwise, breaking updates).
-        create("debug") {
+        // Note: "debug" config already exists, so we configure it instead of creating.
+        named("debug") {
             storeFile = file("debug.keystore")
             storePassword = "android"
             keyAlias = "androiddebugkey"
