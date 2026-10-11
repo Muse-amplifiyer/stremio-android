@@ -59,6 +59,19 @@ class MainApplication : Application(), SingletonImageLoader.Factory {
 
     override fun onCreate() {
         super.onCreate()
+        // Crash log catcher: writes uncaught exceptions to Downloads/crash.log for debugging.
+        val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+        val appCtx = this
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            try {
+                val dir = appCtx.getExternalFilesDir(null) ?: appCtx.filesDir
+                val logFile = java.io.File(dir, "stremio-crash.log")
+                val sw = java.io.StringWriter()
+                throwable.printStackTrace(java.io.PrintWriter(sw))
+                logFile.writeText("Crash at ${java.util.Date()}\nThread: ${thread.name}\n\n${sw}")
+            } catch (_: Exception) { }
+            defaultHandler?.uncaughtException(thread, throwable)
+        }
         Timber.plant(Timber.DebugTree())
         Timber.plant(CrashlyticsTree())
         try {
