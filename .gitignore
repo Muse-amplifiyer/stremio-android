@@ -30,6 +30,7 @@ out/
 !app/src/main/jniLibs/*/
 app/src/main/jniLibs/*/*
 !app/src/main/jniLibs/*/libc++_shared.so
+!app/src/main/jniLibs/*/libstream_server.so
 
 # OS files
 .DS_Store
