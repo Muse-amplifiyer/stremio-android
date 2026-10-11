@@ -35,7 +35,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Compile and assemble debug (arm64 only)
-        run: ./gradlew :app:compileDebugKotlin :app:assembleArm64V8aDebug :tvreceiver:assembleDebug --warning-mode all
+        run: ./gradlew :app:compileDebugKotlin :app:assembleDebug :tvreceiver:assembleDebug -Parm64Only=true --warning-mode all
 
       - name: Verify debug APK outputs
         run: python .github/scripts/verify-apk-outputs.py app/build/outputs/apk/debug arm64-v8a

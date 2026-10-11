@@ -12,7 +12,9 @@ fun stringPropertyOrEnv(name: String): String? =
     (findProperty(name) as? String)?.takeIf { it.isNotBlank() }
         ?: System.getenv(name)?.takeIf { it.isNotBlank() }
 
-val supportedAbis = listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+// Only build arm64 in CI to save time (pass -Parm64Only=true)
+val arm64Only = project.findProperty("arm64Only") == "true"
+val supportedAbis = if (arm64Only) listOf("arm64-v8a") else listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
 
 val releaseSigningValues = listOf(
     stringPropertyOrEnv("ANDROID_KEYSTORE_FILE"),
