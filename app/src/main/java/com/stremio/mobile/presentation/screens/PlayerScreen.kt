@@ -777,7 +777,7 @@ fun PlayerScreen(
                         if (isCodecError) {
                             // Small delay to avoid rapid switching
                             kotlinx.coroutines.delay(500)
-                            playbackError = null
+                            // Don't hide error UI; keep manual buttons visible during auto-switch
                             // Chain: EXO -> MPV -> VLC
                             when (getCurrentEngine()) {
                                 com.stremio.mobile.player.PlayerEngine.MPV -> onRetryWithVlc()
@@ -789,16 +789,17 @@ fun PlayerScreen(
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         ThemedButton(text = "Back", onClick = onBack)
                         if (isCodecError) {
-                            // Manual fallback button (auto-switch also attempts)
+                            // Manual fallback buttons (auto-switch also attempts)
                             ThemedButton(
                                 text = "MPV",
                                 onClick = {
-                                    playbackError = null
-                                    when (getCurrentEngine()) {
-                                        com.stremio.mobile.player.PlayerEngine.MPV -> onRetryWithVlc()
-                                        com.stremio.mobile.player.PlayerEngine.VLC -> player?.retry()
-                                        else -> onRetryWithMpv()
-                                    }
+                                    onRetryWithMpv()
+                                },
+                            )
+                            ThemedButton(
+                                text = "VLC",
+                                onClick = {
+                                    onRetryWithVlc()
                                 },
                             )
                             androidx.compose.material3.Text(
