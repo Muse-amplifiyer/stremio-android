@@ -29,7 +29,9 @@ enum class PlayerEngine(val profileValue: String) {
     EXO("exo"),
     MPV("mpv"),
     /** Renders on a Chromecast via the Cast SDK instead of locally. Never persisted as a preference. */
-    CAST("cast");
+    CAST("cast"),
+    /** Renders on a Fire TV Stick via the TV Receiver app. Never persisted as a preference. */
+    FIRETV("firetv");
 
     companion object {
         fun fromProfileValue(value: String?): PlayerEngine {

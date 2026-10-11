@@ -16,6 +16,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "StremioMobile"
 include(":app")
+include(":tvreceiver")
 include(":mpv-android-lib")
 project(":mpv-android-lib").projectDir = file("third_party/mpv-android-lib/app")
 includeBuild("streamio-core-kotlin/stremio-core-kotlin")
