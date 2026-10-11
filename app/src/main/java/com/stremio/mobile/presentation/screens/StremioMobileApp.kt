@@ -546,6 +546,7 @@ fun StremioMobileApp(viewModel: MainViewModel) {
                     onAttachView = viewModel::attachPlayerView,
                     onDetachView = viewModel::detachPlayerView,
                     onBack = viewModel::closePlayer,
+                    onRetryWithMpv = viewModel::retryWithMpv,
                     getSubtitlePrefs = viewModel::getSubtitlePrefs,
                     onSubtitlePrefsChanged = viewModel::updateSubtitlePrefs,
                     profileSettings = state.profileSettings,

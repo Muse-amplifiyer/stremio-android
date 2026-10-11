@@ -72,6 +72,14 @@ android {
     }
 
     signingConfigs {
+        // Persistent debug keystore so APK updates work (CI runners generate
+        // a different debug key each time otherwise, breaking updates).
+        create("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
         if (!hasPartialReleaseSigning && releaseSigningValues.all { it != null }) {
             create("release") {
                 storeFile = file(releaseSigningValues[0]!!)
@@ -85,9 +93,8 @@ android {
     buildTypes {
         debug {
             matchingFallbacks.add("release")
-            signingConfigs.findByName("release")?.let {
-                signingConfig = it
-            }
+            // Use persistent debug keystore if no release signing configured
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
         release {
             isMinifyEnabled = true

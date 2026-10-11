@@ -103,6 +103,7 @@ fun PlayerScreen(
     onAttachView: (View) -> Unit,
     onDetachView: () -> Unit,
     onBack: () -> Unit,
+    onRetryWithMpv: () -> Unit = {},
     getSubtitlePrefs: () -> Pair<Int, Int> = { 100 to 0 },
     onSubtitlePrefsChanged: (sizePercent: Int, offsetPercent: Int) -> Unit = { _, _ -> },
     profileSettings: com.stremio.core.types.profile.Profile.Settings? = null,
@@ -764,13 +765,29 @@ fun PlayerScreen(
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         ThemedButton(text = "Back", onClick = onBack)
-                        ThemedButton(
-                            text = "Retry",
-                            onClick = {
-                                playbackError = null
-                                player?.retry()
-                            },
-                        )
+                        // If it's a codec error (e.g. TrueHD), offer MPV which software-decodes
+                        val isCodecError = playbackError?.let {
+                            it.contains("MediaCodec", ignoreCase = true) ||
+                            it.contains("NO_UNSUPPORTED", ignoreCase = true) ||
+                            it.contains("unsupported", ignoreCase = true)
+                        } ?: false
+                        if (isCodecError) {
+                            ThemedButton(
+                                text = "Try MPV",
+                                onClick = {
+                                    playbackError = null
+                                    onRetryWithMpv()
+                                },
+                            )
+                        } else {
+                            ThemedButton(
+                                text = "Retry",
+                                onClick = {
+                                    playbackError = null
+                                    player?.retry()
+                                },
+                            )
+                        }
                     }
                 }
             }
