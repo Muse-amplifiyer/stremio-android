@@ -624,6 +624,8 @@ fun PlayerScreen(
         },
         onPictureInPicture = { enterPip() },
         onFireTv = { showFireTvDialog = true },
+        onSwitchToMpv = { onRetryWithMpv() },
+        onSwitchToVlc = { onRetryWithVlc() },
     )
 
     val globalTheme = remember(

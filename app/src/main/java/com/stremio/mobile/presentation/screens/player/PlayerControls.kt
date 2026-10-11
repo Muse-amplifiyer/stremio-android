@@ -148,6 +148,8 @@ class PlayerControlsActions(
     val onToggleStats: () -> Unit,
     val onPictureInPicture: () -> Unit,
     val onFireTv: () -> Unit,
+    val onSwitchToMpv: () -> Unit,
+    val onSwitchToVlc: () -> Unit,
 )
 
 @Composable
@@ -711,6 +713,30 @@ private fun ModernTopPill(
                         onClick = {
                             moreExpanded = false
                             actions.onFireTv()
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = "Switch to MPV",
+                                color = Color.White
+                            )
+                        },
+                        onClick = {
+                            moreExpanded = false
+                            actions.onSwitchToMpv()
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = "Switch to VLC",
+                                color = Color.White
+                            )
+                        },
+                        onClick = {
+                            moreExpanded = false
+                            actions.onSwitchToVlc()
                         },
                     )
                     if (state.hasInfoHash) {
