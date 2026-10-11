@@ -131,7 +131,7 @@ class TvExoPlayer(
         if (positionMs > 0) p.seekTo(positionMs)
         p.play()
 
-        PlayerHolder.player = p
+        PlayerHolder.exoPlayer = p
     }
 
     override fun pause() {
