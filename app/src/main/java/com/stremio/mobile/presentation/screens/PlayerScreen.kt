@@ -665,19 +665,22 @@ fun PlayerScreen(
                         .fillMaxSize()
                         .then(if (controlsBackdrop != null) Modifier.layerBackdrop(controlsBackdrop) else Modifier)
                 ) {
-                    AndroidView(
-                        modifier = Modifier.fillMaxSize(),
-                        factory = { context ->
-                            (player?.createView(context) ?: View(context)).apply {
-                                keepScreenOn = true
-                                onAttachView(this)
+                    // Key on player so the view is recreated when switching engines (Exo->MPV->VLC)
+                    androidx.compose.runtime.key(player) {
+                        AndroidView(
+                            modifier = Modifier.fillMaxSize(),
+                            factory = { context ->
+                                (player?.createView(context) ?: View(context)).apply {
+                                    keepScreenOn = true
+                                    onAttachView(this)
+                                }
+                            },
+                            update = {
+                                player?.setResizeMode(resizeMode)
+                                player?.setSubtitleStyle(subtitleStyle)
                             }
-                        },
-                        update = {
-                            player?.setResizeMode(resizeMode)
-                            player?.setSubtitleStyle(subtitleStyle)
-                        }
-                    )
+                        )
+                    }
                 }
             }
 
