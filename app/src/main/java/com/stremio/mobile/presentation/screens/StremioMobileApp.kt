@@ -532,6 +532,13 @@ fun StremioMobileApp(viewModel: MainViewModel) {
             if (isPlayerOpen) {
                 val playbackState by viewModel.playbackState.collectAsStateWithLifecycle()
                 val isInPipMode by viewModel.isInPipMode.collectAsStateWithLifecycle()
+                // Ensure player is released when the Activity is destroyed (e.g. swiped away
+                // from recents). The playInBackground setting only covers Home-button backgrounding.
+                androidx.compose.runtime.DisposableEffect(Unit) {
+                    onDispose {
+                        viewModel.closePlayer()
+                    }
+                }
                 PlayerScreen(
                     player = viewModel.getPlayer(),
                     activeUri = playbackState.activeUri,
