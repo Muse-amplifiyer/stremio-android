@@ -27,6 +27,11 @@ object CastManager {
 
     private var initialized = false
 
+    /** True if the Cast SDK initialized successfully. The cast button is hidden when false. */
+    @Volatile
+    var isCastAvailable: Boolean = false
+        private set
+
     fun init(context: Context) {
         if (initialized) return
         initialized = true
@@ -37,8 +42,10 @@ object CastManager {
             if (current != null && current.isConnected) {
                 onSessionStarted(current)
             }
+            isCastAvailable = true
         } catch (e: Exception) {
             Timber.w("Cast not available: ${e.message}")
+            isCastAvailable = false
         }
     }
 
