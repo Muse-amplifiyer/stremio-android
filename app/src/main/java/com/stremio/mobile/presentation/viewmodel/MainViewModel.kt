@@ -1527,6 +1527,19 @@ class MainViewModel(
         }
     }
 
+    /**
+     * Retry the current stream with MPV player. Used when ExoPlayer fails with
+     * an unsupported codec (e.g. TrueHD Atmos) that MPV can software-decode.
+     */
+    fun retryWithMpv() {
+        val option = lastPlayedOption ?: return
+        if (!playerOpen.value) return
+        if (playbackRepository.getPlayer()?.engine == PlayerEngine.MPV) return
+        val position = playbackRepository.getPlayer()?.runtimeState?.value?.positionMs ?: 0L
+        Timber.i("ExoPlayer codec failure; retrying with MPV at ${position}ms")
+        switchPlayerEngine(option, PlayerEngine.MPV, position)
+    }
+
     /** Polls live torrent health for a torrent stream and surfaces a fallback when it's dead/too slow. */
     private fun startHealthWatch(option: StreamOption) {
         noSeedsPollJob?.cancel()
