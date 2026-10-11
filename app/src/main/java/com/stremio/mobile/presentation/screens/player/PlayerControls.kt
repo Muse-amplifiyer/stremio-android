@@ -68,8 +68,9 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.PathFillType
+import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.text.font.FontWeight
@@ -103,13 +104,13 @@ private val PipIcon: ImageVector =
     ).apply {
         // Outer frame (even-odd cutout).
         addPath(
-            pathData = "M3,5h18v14H3Z M5,7h14v10H5Z",
+            pathData = PathParser().parsePathString("M3,5h18v14H3Z M5,7h14v10H5Z").toNodes(),
             fill = SolidColor(Color.Black),
             pathFillType = PathFillType.EvenOdd,
         )
         // Inset window, bottom-right.
         addPath(
-            pathData = "M11,11h8v6h-8Z",
+            pathData = PathParser().parsePathString("M11,11h8v6h-8Z").toNodes(),
             fill = SolidColor(Color.Black),
         )
     }.build()
