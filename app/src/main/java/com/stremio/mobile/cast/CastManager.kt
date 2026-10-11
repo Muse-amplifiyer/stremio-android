@@ -35,16 +35,31 @@ object CastManager {
     fun init(context: Context) {
         if (initialized) return
         initialized = true
+        // Use the async API: the synchronous getSharedInstance() can throw Errors
+        // (not just Exceptions) on devices where Play Services/Cast is unavailable,
+        // which would crash the app. The async version reports failure via listener.
         try {
-            val castContext = CastContext.getSharedInstance(context.applicationContext)
-            castContext.sessionManager.addSessionManagerListener(sessionListener, CastSession::class.java)
-            val current = castContext.sessionManager.currentCastSession
-            if (current != null && current.isConnected) {
-                onSessionStarted(current)
+            CastContext.getSharedInstance(
+                context.applicationContext,
+                java.util.concurrent.Executors.newSingleThreadExecutor()
+            ).addOnSuccessListener { castContext ->
+                try {
+                    castContext.sessionManager.addSessionManagerListener(sessionListener, CastSession::class.java)
+                    val current = castContext.sessionManager.currentCastSession
+                    if (current != null && current.isConnected) {
+                        onSessionStarted(current)
+                    }
+                    isCastAvailable = true
+                } catch (e: Exception) {
+                    Timber.w("Cast session setup failed: ${e.message}")
+                    isCastAvailable = false
+                }
+            }.addOnFailureListener { e ->
+                Timber.w("Cast not available: ${e.message}")
+                isCastAvailable = false
             }
-            isCastAvailable = true
-        } catch (e: Exception) {
-            Timber.w("Cast not available: ${e.message}")
+        } catch (t: Throwable) {
+            Timber.w("Cast init failed: ${t.message}")
             isCastAvailable = false
         }
     }

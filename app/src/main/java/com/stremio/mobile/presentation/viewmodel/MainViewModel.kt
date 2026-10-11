@@ -302,7 +302,7 @@ class MainViewModel(
         observeCoreAuth()
         observeStreamingServer()
         observeCastSession()
-        // observeFireTvConnection() // temporarily disabled
+        observeFireTvConnection()
         restoreCoreSession()
         checkForUpdates(manual = true)
 
@@ -1365,8 +1365,7 @@ class MainViewModel(
             val needsServer = streamRequiresLocalServer(option)
             val engine = when {
                 CastManager.isCasting.value && !needsServer -> PlayerEngine.CAST
-                // Fire TV temporarily disabled for crash testing
-                // FireTvManager.isConnected && !needsServer -> PlayerEngine.FIRETV
+                FireTvManager.isConnected && !needsServer -> PlayerEngine.FIRETV
                 else -> PlayerEngine.fromProfileValue(profileSettings.value?.playerType)
             }
             if (streamRequiresLocalServer(option)) {
