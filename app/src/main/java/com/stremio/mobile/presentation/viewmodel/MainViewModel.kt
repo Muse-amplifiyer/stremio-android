@@ -1540,6 +1540,24 @@ class MainViewModel(
         switchPlayerEngine(option, PlayerEngine.MPV, position)
     }
 
+    /**
+     * Retry the current stream with VLC (libVLC). Final fallback when both
+     * ExoPlayer and MPV fail.
+     */
+    fun retryWithVlc() {
+        val option = lastPlayedOption ?: return
+        if (!playerOpen.value) return
+        if (playbackRepository.getPlayer()?.engine == PlayerEngine.VLC) return
+        val position = playbackRepository.getPlayer()?.runtimeState?.value?.positionMs ?: 0L
+        Timber.i("MPV failure; retrying with VLC at ${position}ms")
+        switchPlayerEngine(option, PlayerEngine.VLC, position)
+    }
+
+    /** Returns the current player engine, or null if no player. */
+    fun getCurrentEngine(): PlayerEngine? {
+        return playbackRepository.getPlayer()?.engine
+    }
+
     /** Polls live torrent health for a torrent stream and surfaces a fallback when it's dead/too slow. */
     private fun startHealthWatch(option: StreamOption) {
         noSeedsPollJob?.cancel()

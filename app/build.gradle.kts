@@ -149,6 +149,7 @@ dependencies {
     implementation("androidx.media3:media3-ui:1.10.1")
     implementation("androidx.media3:media3-session:1.10.1")
     implementation(project(":mpv-android-lib"))
+    implementation("org.videolan.android:libvlc-all:3.6.0")
 
     implementation("io.github.kyant0:backdrop:2.0.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")

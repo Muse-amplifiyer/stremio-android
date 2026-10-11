@@ -11,6 +11,7 @@ object PlayerFactory {
         return when (engine) {
             PlayerEngine.EXO -> ExoStreamPlayer(context, settings)
             PlayerEngine.MPV -> MpvStreamPlayer(context, settings)
+            PlayerEngine.VLC -> VlcPlayer(context, settings)
             PlayerEngine.FIRETV -> FireTvPlayer(context, com.stremio.mobile.firetv.FireTvManager)
         }
     }

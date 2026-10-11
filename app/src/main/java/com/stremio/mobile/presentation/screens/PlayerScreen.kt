@@ -104,6 +104,8 @@ fun PlayerScreen(
     onDetachView: () -> Unit,
     onBack: () -> Unit,
     onRetryWithMpv: () -> Unit = {},
+    onRetryWithVlc: () -> Unit = {},
+    getCurrentEngine: () -> com.stremio.mobile.player.PlayerEngine? = { null },
     getSubtitlePrefs: () -> Pair<Int, Int> = { 100 to 0 },
     onSubtitlePrefsChanged: (sizePercent: Int, offsetPercent: Int) -> Unit = { _, _ -> },
     profileSettings: com.stremio.core.types.profile.Profile.Settings? = null,
@@ -773,10 +775,15 @@ fun PlayerScreen(
                     } ?: false
                     androidx.compose.runtime.LaunchedEffect(isCodecError, playbackError) {
                         if (isCodecError) {
-                            // Small delay to avoid rapid switching, then auto-switch to MPV
+                            // Small delay to avoid rapid switching
                             kotlinx.coroutines.delay(500)
                             playbackError = null
-                            onRetryWithMpv()
+                            // Chain: EXO -> MPV -> VLC
+                            when (getCurrentEngine()) {
+                                com.stremio.mobile.player.PlayerEngine.MPV -> onRetryWithVlc()
+                                com.stremio.mobile.player.PlayerEngine.VLC -> { /* Already on VLC, show error */ }
+                                else -> onRetryWithMpv()
+                            }
                         }
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -797,31 +804,7 @@ fun PlayerScreen(
                                 },
                             )
                         }
-                        // VLC as last-resort fallback (external app)
-                        if (!activeUri.isNullOrBlank()) {
-                            ThemedButton(
-                                text = "VLC",
-                                onClick = {
-                                    try {
-                                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
-                                            setDataAndType(android.net.Uri.parse(activeUri), "video/*")
-                                            setPackage("org.videolan.vlc")
-                                            addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                                        }
-                                        context.startActivity(intent)
-                                    } catch (e: Exception) {
-                                        // VLC not installed, try generic video player
-                                        try {
-                                            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
-                                                setDataAndType(android.net.Uri.parse(activeUri), "video/*")
-                                                addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                                            }
-                                            context.startActivity(intent)
-                                        } catch (e2: Exception) { }
-                                    }
-                                },
-                            )
-                        }
+
                     }
                 }
             }

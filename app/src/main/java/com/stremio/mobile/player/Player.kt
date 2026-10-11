@@ -28,6 +28,8 @@ data class ExternalSubtitle(
 enum class PlayerEngine(val profileValue: String) {
     EXO("exo"),
     MPV("mpv"),
+    /** VLC via libVLC (software decoding). Fallback when EXO/MPV fail. Never persisted as preference. */
+    VLC("vlc"),
     /** Renders on a Fire TV Stick via the TV Receiver app. Never persisted as a preference. */
     FIRETV("firetv");
 
