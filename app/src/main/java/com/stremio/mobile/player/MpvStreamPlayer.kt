@@ -161,7 +161,15 @@ class MpvStreamPlayer(
     }
 
     override fun play() {
-        if (!initialized) return
+        if (!initialized) {
+            // Not ready yet; try to load when ready
+            loadIfReady()
+            return
+        }
+        // If file not loaded yet, trigger load
+        if (!fileLoaded) {
+            loadIfReady()
+        }
         MPVLib.setPropertyBoolean("pause", false)
         publishState()
     }
