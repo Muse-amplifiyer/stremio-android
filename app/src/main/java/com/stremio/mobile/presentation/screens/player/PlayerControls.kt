@@ -716,6 +716,20 @@ private fun ModernTopPill(
                         },
                     )
                     DropdownMenuItem(
+                        text = { Text("Switch to MPV", color = Color.White) },
+                        onClick = {
+                            moreExpanded = false
+                            actions.onSwitchToMpv()
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Switch to VLC", color = Color.White) },
+                        onClick = {
+                            moreExpanded = false
+                            actions.onSwitchToVlc()
+                        },
+                    )
+                    DropdownMenuItem(
                         text = {
                             Text(
                                 text = "Switch to MPV",
