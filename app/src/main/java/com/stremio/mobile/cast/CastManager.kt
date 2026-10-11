@@ -43,13 +43,15 @@ object CastManager {
     }
 
     private val sessionListener = object : SessionManagerListener<CastSession> {
+        override fun onSessionStarting(session: CastSession) {}
         override fun onSessionStarted(session: CastSession, sessionId: String) = onSessionStarted(session)
         override fun onSessionStartFailed(session: CastSession, error: Int) {}
+        override fun onSessionEnding(session: CastSession) {}
+        override fun onSessionEnded(session: CastSession, error: Int) = onSessionEnded()
+        override fun onSessionResuming(session: CastSession, sessionId: String) {}
         override fun onSessionResumed(session: CastSession, wasSuspended: Boolean) = onSessionStarted(session)
         override fun onSessionResumeFailed(session: CastSession, error: Int) {}
         override fun onSessionSuspended(session: CastSession, reason: Int) = onSessionEnded()
-        override fun onSessionEnding(session: CastSession) {}
-        override fun onSessionEnded(session: CastSession, error: Int) = onSessionEnded()
     }
 
     private fun onSessionStarted(session: CastSession) {
