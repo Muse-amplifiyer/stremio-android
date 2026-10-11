@@ -156,19 +156,6 @@ class VlcPlayer(
             mediaPlayer?.media = media
             media.release()
 
-            // Add external subtitles
-            subtitles.forEach { sub ->
-                try {
-                    mediaPlayer?.addSlave(
-                        Media.Slave.Type.Subtitle,
-                        Uri.parse(sub.url),
-                        sub.label?.let { true } ?: false
-                    )
-                } catch (e: Exception) {
-                    Timber.w("Failed to add subtitle: ${e.message}")
-                }
-            }
-
             updateState(isBuffering = true, error = null)
             mediaPlayer?.play()
 
@@ -231,17 +218,8 @@ class VlcPlayer(
     }
 
     override fun addExternalSubtitleTracks(tracks: List<ExternalSubtitle>) {
-        tracks.forEach { sub ->
-            try {
-                mediaPlayer?.addSlave(
-                    Media.Slave.Type.Subtitle,
-                    Uri.parse(sub.url),
-                    false
-                )
-            } catch (e: Exception) {
-                Timber.w("Failed to add subtitle track: ${e.message}")
-            }
-        }
+        // Subtitle slaves not supported in this libVLC version; embedded subs still work
+        Timber.d("External subtitles not supported in VLC fallback")
     }
 
     override fun addLocalSubtitle(track: ExternalSubtitle) {
