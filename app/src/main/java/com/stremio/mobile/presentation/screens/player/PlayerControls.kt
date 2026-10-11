@@ -407,6 +407,12 @@ fun ClassicPlayerControls(
                             enabled = true,
                             onClick = actions.onPictureInPicture,
                         )
+                        PlayerIconButton(
+                            imageVector = androidx.compose.material.icons.Icons.Outlined.Tv,
+                            contentDescription = "Cast to Fire TV",
+                            enabled = true,
+                            onClick = actions.onFireTv,
+                        )
                     }
                 }
             }
@@ -691,6 +697,20 @@ private fun ModernTopPill(
                         onClick = {
                             moreExpanded = false
                             actions.onPictureInPicture()
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Cast to Fire TV", color = Color.White) },
+                        leadingIcon = {
+                            Icon(
+                                androidx.compose.material.icons.Icons.Outlined.Tv,
+                                contentDescription = null,
+                                tint = Color.White
+                            )
+                        },
+                        onClick = {
+                            moreExpanded = false
+                            actions.onFireTv()
                         },
                     )
                     if (state.hasInfoHash) {
