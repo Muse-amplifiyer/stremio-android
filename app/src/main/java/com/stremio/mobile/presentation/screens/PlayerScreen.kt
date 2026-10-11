@@ -763,21 +763,30 @@ fun PlayerScreen(
                         color = Color.White.copy(alpha = 0.7f),
                         fontSize = 13.sp,
                     )
+                    // Auto-switch to MPV on codec errors (e.g. TrueHD Atmos).
+                    // MPV software-decodes formats that ExoPlayer's hardware decoder can't.
+                    val isCodecError = playbackError?.let {
+                        it.contains("MediaCodec", ignoreCase = true) ||
+                        it.contains("NO_UNSUPPORTED", ignoreCase = true) ||
+                        it.contains("true-hd", ignoreCase = true) ||
+                        it.contains("unsupported", ignoreCase = true)
+                    } ?: false
+                    androidx.compose.runtime.LaunchedEffect(isCodecError, playbackError) {
+                        if (isCodecError) {
+                            // Small delay to avoid rapid switching, then auto-switch to MPV
+                            kotlinx.coroutines.delay(500)
+                            playbackError = null
+                            onRetryWithMpv()
+                        }
+                    }
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         ThemedButton(text = "Back", onClick = onBack)
-                        // If it's a codec error (e.g. TrueHD), offer MPV which software-decodes
-                        val isCodecError = playbackError?.let {
-                            it.contains("MediaCodec", ignoreCase = true) ||
-                            it.contains("NO_UNSUPPORTED", ignoreCase = true) ||
-                            it.contains("unsupported", ignoreCase = true)
-                        } ?: false
                         if (isCodecError) {
-                            ThemedButton(
-                                text = "Try MPV",
-                                onClick = {
-                                    playbackError = null
-                                    onRetryWithMpv()
-                                },
+                            // Show switching indicator while auto-switch happens
+                            androidx.compose.material3.Text(
+                                "Switching to MPV...",
+                                color = Color.White.copy(alpha = 0.7f),
+                                fontSize = 13.sp,
                             )
                         } else {
                             ThemedButton(
@@ -785,6 +794,31 @@ fun PlayerScreen(
                                 onClick = {
                                     playbackError = null
                                     player?.retry()
+                                },
+                            )
+                        }
+                        // VLC as last-resort fallback (external app)
+                        if (!activeUri.isNullOrBlank()) {
+                            ThemedButton(
+                                text = "VLC",
+                                onClick = {
+                                    try {
+                                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                                            setDataAndType(android.net.Uri.parse(activeUri), "video/*")
+                                            setPackage("org.videolan.vlc")
+                                            addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        }
+                                        context.startActivity(intent)
+                                    } catch (e: Exception) {
+                                        // VLC not installed, try generic video player
+                                        try {
+                                            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                                                setDataAndType(android.net.Uri.parse(activeUri), "video/*")
+                                                addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                            }
+                                            context.startActivity(intent)
+                                        } catch (e2: Exception) { }
+                                    }
                                 },
                             )
                         }
