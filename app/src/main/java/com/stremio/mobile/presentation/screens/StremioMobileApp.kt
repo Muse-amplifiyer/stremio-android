@@ -531,6 +531,7 @@ fun StremioMobileApp(viewModel: MainViewModel) {
 
             if (isPlayerOpen) {
                 val playbackState by viewModel.playbackState.collectAsStateWithLifecycle()
+                val isInPipMode by viewModel.isInPipMode.collectAsStateWithLifecycle()
                 PlayerScreen(
                     player = viewModel.getPlayer(),
                     activeUri = playbackState.activeUri,
@@ -565,6 +566,7 @@ fun StremioMobileApp(viewModel: MainViewModel) {
                     glassHapticsEnabled = state.glassHapticsEnabled,
                     hapticsIntensity = state.hapticsIntensity,
                     liquidGlassTuning = state.liquidGlassTuning,
+                    isInPipMode = isInPipMode,
                 )
             }
 

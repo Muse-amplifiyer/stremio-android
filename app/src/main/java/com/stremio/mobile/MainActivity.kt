@@ -1,9 +1,12 @@
 package com.stremio.mobile
 
 import android.Manifest
+import android.app.PictureInPictureParams
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
+import android.util.Rational
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -79,6 +82,32 @@ class MainActivity : ComponentActivity() {
     override fun onStop() {
         super.onStop()
         viewModel.onAppBackgrounded()
+    }
+
+    /**
+     * Auto-enter picture-in-picture when the user presses Home/recents while a video is playing.
+     * PiP only pauses the activity (onPause), never stops it, so playback keeps running.
+     */
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            viewModel.isPlayerOpen.value &&
+            viewModel.playbackState.value.isPlaying
+        ) {
+            enterPictureInPictureMode(
+                PictureInPictureParams.Builder()
+                    .setAspectRatio(Rational(16, 9))
+                    .build()
+            )
+        }
+    }
+
+    override fun onPictureInPictureModeChanged(
+        isInPictureInPictureMode: Boolean,
+        newConfig: Configuration
+    ) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        viewModel.setPipMode(isInPictureInPictureMode)
     }
 
     private fun requestNotificationPermission() {

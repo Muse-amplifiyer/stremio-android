@@ -116,6 +116,7 @@ class PlayerControlsActions(
     val onShowSubtitles: () -> Unit,
     val onShowAudio: () -> Unit,
     val onToggleStats: () -> Unit,
+    val onPictureInPicture: () -> Unit,
 )
 
 @Composable
@@ -368,6 +369,13 @@ fun ClassicPlayerControls(
                                 fontWeight = FontWeight.Bold
                             )
                         }
+
+                        PlayerIconButton(
+                            imageVector = Icons.Outlined.PictureInPicture,
+                            contentDescription = "Picture in Picture",
+                            enabled = true,
+                            onClick = actions.onPictureInPicture,
+                        )
                     }
                 }
             }
@@ -642,6 +650,16 @@ private fun ModernTopPill(
                         onClick = {
                             moreExpanded = false
                             actions.onToggleMute()
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Picture in Picture", color = Color.White) },
+                        leadingIcon = {
+                            Icon(Icons.Outlined.PictureInPicture, contentDescription = null, tint = Color.White)
+                        },
+                        onClick = {
+                            moreExpanded = false
+                            actions.onPictureInPicture()
                         },
                     )
                     if (state.hasInfoHash) {

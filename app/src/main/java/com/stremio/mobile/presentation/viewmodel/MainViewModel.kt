@@ -149,6 +149,14 @@ class MainViewModel(
     private val playerOpen = MutableStateFlow(false)
     val isPlayerOpen: StateFlow<Boolean> = playerOpen
 
+    // Picture-in-picture state, driven by MainActivity.onPictureInPictureModeChanged.
+    private val pipMode = MutableStateFlow(false)
+    val isInPipMode: StateFlow<Boolean> = pipMode
+
+    fun setPipMode(inPip: Boolean) {
+        pipMode.value = inPip
+    }
+
     private var streamsJob: Job? = null
     private var playJob: Job? = null
     private var searchJob: Job? = null

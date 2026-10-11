@@ -1,7 +1,9 @@
 package com.stremio.mobile.presentation.screens
 
 import android.os.Build
+import android.util.Rational
 import android.app.Activity
+import android.app.PictureInPictureParams
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -128,6 +130,7 @@ fun PlayerScreen(
     hapticsIntensity: String = "Medium",
     liquidGlassTuning: LiquidGlassTuning = LiquidGlassTuning(),
     modifier: Modifier = Modifier,
+    isInPipMode: Boolean = false,
 ) {
     BackHandler(onBack = onBack)
 
@@ -521,6 +524,18 @@ fun PlayerScreen(
     val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
     val volumeFraction = if (maxVolume > 0) currentVolume.toFloat() / maxVolume else 0f
     val speedOptions = listOf(0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f)
+    // Picture-in-picture entry point (player controls button / overflow menu).
+    fun enterPip() {
+        val act = activity ?: return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            act.enterPictureInPictureMode(
+                PictureInPictureParams.Builder()
+                    .setAspectRatio(Rational(16, 9))
+                    .build()
+            )
+        }
+    }
+
     val controlsState = PlayerControlsState(
         isPlaying = isPlaying,
         isBuffering = isBuffering,
@@ -600,6 +615,7 @@ fun PlayerScreen(
             showStatsPanel = !showStatsPanel
             resetActivityTimer()
         },
+        onPictureInPicture = { enterPip() },
     )
 
     val globalTheme = remember(
@@ -662,7 +678,8 @@ fun PlayerScreen(
         // Tap / swipe gesture layer. Detection + the transient HUDs live in PlayerGestures.kt;
         // player-owned actions are routed back through callbacks so the gesture layer never
         // touches showControls directly (VLC-style decoupling).
-        Box(
+        // Hidden in picture-in-picture: the PiP window shows video only.
+        if (!isInPipMode) Box(
             modifier = Modifier
                 .fillMaxSize()
                 .playerGestures(
@@ -863,7 +880,8 @@ fun PlayerScreen(
             modifier = Modifier.fillMaxSize(),
         )
 
-        when (globalUiStyle) {
+        // Player controls are hidden in picture-in-picture (PiP window shows video only).
+        if (!isInPipMode) when (globalUiStyle) {
             "modern" -> {
                 CompositionLocalProvider(LocalGlassAlpha provides globalGlassAlpha) {
                     ModernPlayerControls(
