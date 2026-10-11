@@ -67,7 +67,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.PathFillType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.text.font.FontWeight
@@ -85,6 +87,32 @@ import com.stremio.mobile.presentation.components.GlassLegibility
 import com.stremio.mobile.presentation.components.LocalGlassLegibility
 import com.stremio.mobile.presentation.components.StaticGlassCard
 import kotlin.math.abs
+
+/**
+ * Picture-in-picture glyph drawn locally: the project's Compose BOM no longer ships
+ * `Icons.Outlined.PictureInPicture`, so the icon is defined here instead of depending
+ * on the icon library's contents. Callers tint it like any other icon.
+ */
+private val PipIcon: ImageVector =
+    ImageVector.Builder(
+        name = "Pip",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f,
+    ).apply {
+        // Outer frame (even-odd cutout).
+        addPath(
+            pathData = "M3,5h18v14H3Z M5,7h14v10H5Z",
+            fill = SolidColor(Color.Black),
+            pathFillType = PathFillType.EvenOdd,
+        )
+        // Inset window, bottom-right.
+        addPath(
+            pathData = "M11,11h8v6h-8Z",
+            fill = SolidColor(Color.Black),
+        )
+    }.build()
 
 data class PlayerControlsState(
     val isPlaying: Boolean,
@@ -371,7 +399,7 @@ fun ClassicPlayerControls(
                         }
 
                         PlayerIconButton(
-                            imageVector = Icons.Outlined.PictureInPicture,
+                            imageVector = PipIcon,
                             contentDescription = "Picture in Picture",
                             enabled = true,
                             onClick = actions.onPictureInPicture,
@@ -655,7 +683,7 @@ private fun ModernTopPill(
                     DropdownMenuItem(
                         text = { Text("Picture in Picture", color = Color.White) },
                         leadingIcon = {
-                            Icon(Icons.Outlined.PictureInPicture, contentDescription = null, tint = Color.White)
+                            Icon(PipIcon, contentDescription = null, tint = Color.White)
                         },
                         onClick = {
                             moreExpanded = false
