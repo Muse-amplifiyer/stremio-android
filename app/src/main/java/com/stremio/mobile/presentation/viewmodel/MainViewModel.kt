@@ -20,6 +20,7 @@ import com.stremio.mobile.player.PlayerEngine
 import com.stremio.mobile.player.PlayerSubtitleStyle
 import com.stremio.mobile.player.PlayerTrackOption
 import com.stremio.mobile.cast.CastManager
+import com.stremio.mobile.firetv.FireTvManager
 import com.stremio.mobile.core.theme.AppFont
 import timber.log.Timber
 import com.stremio.mobile.presentation.state.*
@@ -301,6 +302,7 @@ class MainViewModel(
         observeCoreAuth()
         observeStreamingServer()
         observeCastSession()
+        observeFireTvConnection()
         restoreCoreSession()
         checkForUpdates(manual = true)
 
@@ -1358,10 +1360,14 @@ class MainViewModel(
         streams.value = streams.value.copy(isResolving = true, error = null)
         playJob = viewModelScope.launch {
             // Chromecast v1: direct HTTP streams go to the Cast receiver when a session is active.
+            // Fire TV: direct HTTP streams go to the TV receiver when connected.
             // Anything needing the local streaming server (torrents) stays local.
-            val casting = CastManager.isCasting.value && !streamRequiresLocalServer(option)
-            val engine = if (casting) PlayerEngine.CAST
-                else PlayerEngine.fromProfileValue(profileSettings.value?.playerType)
+            val needsServer = streamRequiresLocalServer(option)
+            val engine = when {
+                CastManager.isCasting.value && !needsServer -> PlayerEngine.CAST
+                FireTvManager.isConnected && !needsServer -> PlayerEngine.FIRETV
+                else -> PlayerEngine.fromProfileValue(profileSettings.value?.playerType)
+            }
             if (streamRequiresLocalServer(option)) {
                 runCatching { startServerInternal() }
                     .onFailure { error ->
@@ -1488,6 +1494,50 @@ class MainViewModel(
     }
 
     // endregion Chromecast ------------------------------------------------------------------
+
+    // region Fire TV ----------------------------------------------------------------------
+
+    private fun observeFireTvConnection() {
+        viewModelScope.launch {
+            var wasConnected = false
+            FireTvManager.connectedDevice.collect { device ->
+                val connected = device != null
+                try {
+                    if (connected && !wasConnected) onFireTvConnected()
+                    if (!connected && wasConnected) onFireTvDisconnected()
+                } finally {
+                    wasConnected = connected
+                }
+            }
+        }
+    }
+
+    /** Fire TV connected mid-playback: move the current direct stream onto it. */
+    private fun onFireTvConnected() {
+        val option = lastPlayedOption ?: return
+        if (!playerOpen.value) return
+        if (streamRequiresLocalServer(option)) {
+            Timber.i("Fire TV connected during torrent playback; staying local (v1 supports direct streams only)")
+            return
+        }
+        if (playbackRepository.getPlayer()?.engine == PlayerEngine.FIRETV) return
+        val position = playbackRepository.getPlayer()?.runtimeState?.value?.positionMs ?: 0L
+        Timber.i("Fire TV connected; switching playback to Fire TV at ${position}ms")
+        switchPlayerEngine(option, PlayerEngine.FIRETV, position)
+    }
+
+    /** Fire TV disconnected: resume locally where the TV left off. */
+    private fun onFireTvDisconnected() {
+        val player = playbackRepository.getPlayer() ?: return
+        if (player.engine != PlayerEngine.FIRETV) return
+        val option = lastPlayedOption ?: return
+        val position = player.runtimeState.value.positionMs
+        val engine = PlayerEngine.fromProfileValue(profileSettings.value?.playerType)
+        Timber.i("Fire TV disconnected; resuming locally at ${position}ms")
+        switchPlayerEngine(option, engine, position)
+    }
+
+    // endregion Fire TV -------------------------------------------------------------------
 
     private fun rememberLocalStreamSelection(option: StreamOption) {
         val currentStreams = streams.value

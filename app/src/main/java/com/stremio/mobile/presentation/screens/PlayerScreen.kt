@@ -239,6 +239,9 @@ fun PlayerScreen(
     // Stats Panel
     var showStatsPanel by remember { mutableStateOf(false) }
     var torrentStats by remember { mutableStateOf<JSONObject?>(null) }
+    
+    // Fire TV setup dialog
+    var showFireTvDialog by remember { mutableStateOf(false) }
 
     val infoHash = remember(activeUri) {
         activeUri?.let { uri ->
@@ -616,6 +619,7 @@ fun PlayerScreen(
             resetActivityTimer()
         },
         onPictureInPicture = { enterPip() },
+        onFireTv = { showFireTvDialog = true },
     )
 
     val globalTheme = remember(
@@ -933,6 +937,11 @@ fun PlayerScreen(
         }
     }
 }
+
+    // Fire TV Receiver Dialogue
+    if (showFireTvDialog) {
+        FireTvDialog(onDismiss = { showFireTvDialog = false })
+    }
 
     // Audio Tracks Dialogue
     if (showAudioDialog) {

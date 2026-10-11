@@ -41,6 +41,7 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.outlined.Subtitles
+import androidx.compose.material.icons.outlined.Tv
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -146,6 +147,7 @@ class PlayerControlsActions(
     val onShowAudio: () -> Unit,
     val onToggleStats: () -> Unit,
     val onPictureInPicture: () -> Unit,
+    val onFireTv: () -> Unit,
 )
 
 @Composable
