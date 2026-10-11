@@ -1560,18 +1560,20 @@ class MainViewModel(
         try {
             switchPlayerEngine(option, PlayerEngine.MPV, position)
             // Force playback to start: seek jolts the player (user-confirmed workaround)
-            kotlinx.coroutines.delay(1000)
-            try {
-                val newPlayer = playbackRepository.getPlayer()
-                if (newPlayer?.engine == PlayerEngine.MPV) {
-                    // Small seek to force playback start
-                    val pos = newPlayer.runtimeState.value.positionMs
-                    newPlayer.seekTo(if (pos > 0) pos else 1000L)
-                    newPlayer.play()
-                    Timber.i("Forced MPV playback via seek+play")
+            viewModelScope.launch {
+                kotlinx.coroutines.delay(1000)
+                try {
+                    val newPlayer = playbackRepository.getPlayer()
+                    if (newPlayer?.engine == PlayerEngine.MPV) {
+                        // Small seek to force playback start
+                        val pos = newPlayer.runtimeState.value.positionMs
+                        newPlayer.seekTo(if (pos > 0) pos else 1000L)
+                        newPlayer.play()
+                        Timber.i("Forced MPV playback via seek+play")
+                    }
+                } catch (e: Exception) {
+                    Timber.w("Force play failed: ${e.message}")
                 }
-            } catch (e: Exception) {
-                Timber.w("Force play failed: ${e.message}")
             }
         } catch (e: Exception) {
             Timber.e("retryWithMpv: switch failed: ${e.message}")
