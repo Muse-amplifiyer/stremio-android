@@ -407,24 +407,6 @@ fun ClassicPlayerControls(
                             enabled = true,
                             onClick = actions.onPictureInPicture,
                         )
-                        // Chromecast device picker. MediaRouteButton handles the picker dialog
-                        // and connected-state indicator on its own. Only shown when the Cast
-                        // SDK initialized; the setup call can throw if Play Services is broken.
-                        if (com.stremio.mobile.cast.CastManager.isCastAvailable) {
-                            androidx.compose.ui.viewinterop.AndroidView(
-                                factory = { ctx ->
-                                    androidx.mediarouter.app.MediaRouteButton(ctx).also { button ->
-                                        try {
-                                            com.google.android.gms.cast.framework.CastButtonFactory
-                                                .setUpMediaRouteButton(ctx, button)
-                                        } catch (e: Exception) {
-                                            android.util.Log.w("PlayerControls", "Cast button setup failed", e)
-                                        }
-                                    }
-                                },
-                                modifier = Modifier.size(44.dp),
-                            )
-                        }
                     }
                 }
             }

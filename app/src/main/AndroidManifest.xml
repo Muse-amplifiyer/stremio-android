@@ -47,11 +47,6 @@
             android:name="com.facebook.sdk.ClientToken"
             android:value="@string/facebook_client_token" />
 
-        <!-- Chromecast sender: points the Cast SDK at our CastOptionsProvider. -->
-        <meta-data
-            android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
-            android:value="com.stremio.mobile.cast.CastOptionsProvider" />
-
         <service
             android:name=".server.ServerService"
             android:enabled="true"

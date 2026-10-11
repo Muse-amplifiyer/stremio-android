@@ -19,7 +19,6 @@ import com.stremio.mobile.player.LanguageCatalog
 import com.stremio.mobile.player.PlayerEngine
 import com.stremio.mobile.player.PlayerSubtitleStyle
 import com.stremio.mobile.player.PlayerTrackOption
-import com.stremio.mobile.cast.CastManager
 import com.stremio.mobile.firetv.FireTvManager
 import com.stremio.mobile.core.theme.AppFont
 import timber.log.Timber
@@ -301,7 +300,6 @@ class MainViewModel(
         refreshLibrary()
         observeCoreAuth()
         observeStreamingServer()
-        observeCastSession()
         observeFireTvConnection()
         restoreCoreSession()
         checkForUpdates(manual = true)
@@ -1364,7 +1362,6 @@ class MainViewModel(
             // Anything needing the local streaming server (torrents) stays local.
             val needsServer = streamRequiresLocalServer(option)
             val engine = when {
-                CastManager.isCasting.value && !needsServer -> PlayerEngine.CAST
                 FireTvManager.isConnected && !needsServer -> PlayerEngine.FIRETV
                 else -> PlayerEngine.fromProfileValue(profileSettings.value?.playerType)
             }
@@ -1436,67 +1433,6 @@ class MainViewModel(
             directUrl?.startsWith(StremioCore.STREAMING_SERVER_BASE) == true
         }.getOrDefault(false)
     }
-
-    // region Chromecast ---------------------------------------------------------------------
-
-    private fun observeCastSession() {
-        viewModelScope.launch {
-            var wasCasting = false
-            CastManager.isCasting.collect { casting ->
-                try {
-                    if (casting && !wasCasting) onCastSessionStarted()
-                    if (!casting && wasCasting) onCastSessionEnded()
-                } finally {
-                    wasCasting = casting
-                }
-            }
-        }
-    }
-
-    /** A Cast device connected mid-playback: move the current direct stream onto it. */
-    private fun onCastSessionStarted() {
-        val option = lastPlayedOption ?: return
-        if (!playerOpen.value) return
-        if (streamRequiresLocalServer(option)) {
-            Timber.i("Cast connected during torrent playback; staying local (v1 supports direct streams only)")
-            return
-        }
-        if (playbackRepository.getPlayer()?.engine == PlayerEngine.CAST) return
-        val position = playbackRepository.getPlayer()?.runtimeState?.value?.positionMs ?: 0L
-        Timber.i("Cast connected; switching playback to Chromecast at ${position}ms")
-        switchPlayerEngine(option, PlayerEngine.CAST, position)
-    }
-
-    /** Cast session ended: resume locally where the TV left off. */
-    private fun onCastSessionEnded() {
-        val player = playbackRepository.getPlayer() ?: return
-        if (player.engine != PlayerEngine.CAST) return
-        val option = lastPlayedOption ?: return
-        val position = player.runtimeState.value.positionMs
-        val engine = PlayerEngine.fromProfileValue(profileSettings.value?.playerType)
-        Timber.i("Cast ended; resuming locally at ${position}ms")
-        switchPlayerEngine(option, engine, position)
-    }
-
-    private fun switchPlayerEngine(option: StreamOption, engine: PlayerEngine, startPositionMs: Long) {
-        playJob?.cancel()
-        playJob = viewModelScope.launch {
-            val loaded = playbackRepository.resolveAndLoadStream(
-                option = option,
-                engine = engine,
-                displayTitle = playbackDisplayTitle(),
-                startPositionOverride = startPositionMs,
-            )
-            if (!loaded) {
-                streams.value = streams.value.copy(
-                    isResolving = false,
-                    error = "Could not switch playback device.",
-                )
-            }
-        }
-    }
-
-    // endregion Chromecast ------------------------------------------------------------------
 
     // region Fire TV ----------------------------------------------------------------------
 
