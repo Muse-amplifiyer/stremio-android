@@ -33,6 +33,7 @@ class PlaybackRepository(
         option: StreamOption,
         engine: PlayerEngine = PlayerEngine.EXO,
         displayTitle: String? = null,
+        startPositionOverride: Long? = null,
     ): Boolean {
         val url = runCatching { core.resolvePlayableUrl(option.core).first() }.getOrNull()
             ?: core.directUrl(option.core.stream)
@@ -54,7 +55,8 @@ class PlaybackRepository(
             )
         }
         val preferredLang = runCatching { core.getSubtitleSettings().language }.getOrNull()
-        val startPositionMs = runCatching { core.getResumePositionMs(option.core.streamRequest) }.getOrDefault(0L)
+        val startPositionMs = startPositionOverride
+            ?: runCatching { core.getResumePositionMs(option.core.streamRequest) }.getOrDefault(0L)
         val settings = runCatching { core.getCtx().profile.settings }.getOrNull()
 
         playbackManager.load(

@@ -11,6 +11,7 @@ object PlayerFactory {
         return when (engine) {
             PlayerEngine.EXO -> ExoStreamPlayer(context, settings)
             PlayerEngine.MPV -> MpvStreamPlayer(context, settings)
+            PlayerEngine.CAST -> CastPlayer(context)
         }
     }
 }

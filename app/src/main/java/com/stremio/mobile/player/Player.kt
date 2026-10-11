@@ -27,7 +27,9 @@ data class ExternalSubtitle(
 
 enum class PlayerEngine(val profileValue: String) {
     EXO("exo"),
-    MPV("mpv");
+    MPV("mpv"),
+    /** Renders on a Chromecast via the Cast SDK instead of locally. Never persisted as a preference. */
+    CAST("cast");
 
     companion object {
         fun fromProfileValue(value: String?): PlayerEngine {

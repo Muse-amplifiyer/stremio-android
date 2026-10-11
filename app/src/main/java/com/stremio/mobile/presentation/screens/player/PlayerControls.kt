@@ -405,6 +405,17 @@ fun ClassicPlayerControls(
                             enabled = true,
                             onClick = actions.onPictureInPicture,
                         )
+                        // Chromecast device picker. MediaRouteButton handles the picker dialog
+                        // and connected-state indicator on its own.
+                        androidx.compose.ui.viewinterop.AndroidView(
+                            factory = { ctx ->
+                                androidx.mediarouter.app.MediaRouteButton(ctx).also { button ->
+                                    com.google.android.gms.cast.framework.CastButtonFactory
+                                        .setUpMediaRouteButton(ctx, button)
+                                }
+                            },
+                            modifier = Modifier.size(44.dp),
+                        )
                     }
                 }
             }

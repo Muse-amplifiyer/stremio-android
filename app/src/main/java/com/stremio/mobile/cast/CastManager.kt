@@ -1,0 +1,68 @@
+package com.stremio.mobile.cast
+
+import android.content.Context
+import com.google.android.gms.cast.framework.CastContext
+import com.google.android.gms.cast.framework.CastSession
+import com.google.android.gms.cast.framework.SessionManagerListener
+import com.google.android.gms.cast.framework.media.RemoteMediaClient
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import timber.log.Timber
+
+/**
+ * Process-wide holder for the current Cast session. Initialized once from
+ * MainApplication.onCreate. Safe to use when Play Services / Cast is absent:
+ * it simply never reports a session.
+ */
+object CastManager {
+    private val _isCasting = MutableStateFlow(false)
+    val isCasting: StateFlow<Boolean> = _isCasting
+
+    private val _deviceName = MutableStateFlow<String?>(null)
+    val deviceName: StateFlow<String?> = _deviceName
+
+    @Volatile
+    var remoteMediaClient: RemoteMediaClient? = null
+        private set
+
+    private var initialized = false
+
+    fun init(context: Context) {
+        if (initialized) return
+        initialized = true
+        try {
+            val castContext = CastContext.getSharedInstance(context.applicationContext)
+            castContext.sessionManager.addSessionManagerListener(sessionListener, CastSession::class.java)
+            val current = castContext.sessionManager.currentCastSession
+            if (current != null && current.isConnected) {
+                onSessionStarted(current)
+            }
+        } catch (e: Exception) {
+            Timber.w("Cast not available: ${e.message}")
+        }
+    }
+
+    private val sessionListener = object : SessionManagerListener<CastSession> {
+        override fun onSessionStarted(session: CastSession, sessionId: String) = onSessionStarted(session)
+        override fun onSessionStartFailed(session: CastSession, error: Int) {}
+        override fun onSessionResumed(session: CastSession, wasSuspended: Boolean) = onSessionStarted(session)
+        override fun onSessionResumeFailed(session: CastSession, error: Int) {}
+        override fun onSessionSuspended(session: CastSession, reason: Int) = onSessionEnded()
+        override fun onSessionEnding(session: CastSession) {}
+        override fun onSessionEnded(session: CastSession, error: Int) = onSessionEnded()
+    }
+
+    private fun onSessionStarted(session: CastSession) {
+        remoteMediaClient = session.remoteMediaClient
+        _deviceName.value = session.castDevice?.friendlyName
+        _isCasting.value = true
+        Timber.i("Cast session started on ${session.castDevice?.friendlyName}")
+    }
+
+    private fun onSessionEnded() {
+        remoteMediaClient = null
+        _deviceName.value = null
+        _isCasting.value = false
+        Timber.i("Cast session ended")
+    }
+}
