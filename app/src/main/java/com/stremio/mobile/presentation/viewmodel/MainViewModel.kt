@@ -1428,11 +1428,14 @@ class MainViewModel(
     }
 
     private fun streamRequiresLocalServer(option: StreamOption): Boolean {
-        if (option.core.stream.source is com.stremio.core.types.resource.Stream.Source.Tramvai) {
-            return true
-        }
-        val directUrl = runCatching { core.directUrl(option.core.stream) }.getOrNull()
-        return directUrl?.startsWith(StremioCore.STREAMING_SERVER_BASE) == true
+        // Fully exception-safe: any failure defaults to false (treat as direct stream).
+        return runCatching {
+            if (option.core.stream.source is com.stremio.core.types.resource.Stream.Source.Tramvai) {
+                return@runCatching true
+            }
+            val directUrl = core.directUrl(option.core.stream)
+            directUrl?.startsWith(StremioCore.STREAMING_SERVER_BASE) == true
+        }.getOrDefault(false)
     }
 
     // region Chromecast ---------------------------------------------------------------------
