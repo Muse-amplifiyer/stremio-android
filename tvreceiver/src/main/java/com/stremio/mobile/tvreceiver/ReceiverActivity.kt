@@ -10,14 +10,17 @@ import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.media3.ui.PlayerView
+import org.videolan.libvlc.util.VLCVideoLayout
 
 /**
  * Minimal TV UI: fullscreen video when playing, "waiting for phone" otherwise.
  * All control comes from the phone; the TV remote is not needed.
+ * Supports both ExoPlayer (hardware) and VLC (software fallback).
  */
 class ReceiverActivity : Activity() {
 
     private var playerView: PlayerView? = null
+    private var vlcVideoLayout: VLCVideoLayout? = null
     private var statusView: TextView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,6 +46,13 @@ class ReceiverActivity : Activity() {
                 FrameLayout.LayoutParams.MATCH_PARENT,
             )
         }
+        vlcVideoLayout = VLCVideoLayout(this).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT,
+            )
+            visibility = View.GONE
+        }
         statusView = TextView(this).apply {
             text = "Stremio TV Receiver\n\nWaiting for your phone…"
             gravity = Gravity.CENTER
@@ -54,6 +64,7 @@ class ReceiverActivity : Activity() {
             )
         }
         root.addView(playerView)
+        root.addView(vlcVideoLayout)
         root.addView(statusView)
         setContentView(root)
 
@@ -72,10 +83,25 @@ class ReceiverActivity : Activity() {
     }
 
     private fun attachPlayer() {
-        val p = PlayerHolder.player
+        // Check for VLC first (software fallback)
+        val vlcPlayer = PlayerHolder.vlcPlayer
+        if (vlcPlayer != null) {
+            vlcVideoLayout?.let { layout ->
+                vlcPlayer.attachVideoLayout(layout)
+                PlayerHolder.vlcVideoLayout = layout
+            }
+            playerView?.visibility = View.GONE
+            vlcVideoLayout?.visibility = View.VISIBLE
+            statusView?.visibility = View.GONE
+            return
+        }
+
+        // Fall back to ExoPlayer
+        val p = PlayerHolder.exoPlayer
         playerView?.player = p
         val playing = p != null && (p.isPlaying || p.playbackState != androidx.media3.common.Player.STATE_IDLE)
         statusView?.visibility = if (playing) View.GONE else View.VISIBLE
         playerView?.visibility = if (playing) View.VISIBLE else View.GONE
+        vlcVideoLayout?.visibility = View.GONE
     }
 }

@@ -9,12 +9,7 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.media3.common.C
-import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
-import androidx.media3.datasource.DefaultHttpDataSource
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -25,13 +20,16 @@ import org.json.JSONObject
  * Foreground service: keeps the HTTP control server alive and owns the ExoPlayer.
  * Started on boot; the phone app talks to it over the LAN.
  */
-class ReceiverService : Service(), ControlServer.CommandHandler {
+class ReceiverService : Service(), ControlServer.CommandHandler, TvPlayerCallback {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var server: ControlServer? = null
-    private var player: ExoPlayer? = null
+    private var currentPlayer: TvPlayer? = null
     private var currentTitle: String? = null
+    private var currentUrl: String? = null
+    private var currentPositionMs: Long = 0L
     private var subtitleTracks: List<ControlServer.SubtitleTrack> = emptyList()
+    private var usedVlcFallback = false
 
     override fun onCreate() {
         super.onCreate()
@@ -48,8 +46,8 @@ class ReceiverService : Service(), ControlServer.CommandHandler {
 
     override fun onDestroy() {
         server?.stop()
-        player?.release()
-        player = null
+        currentPlayer?.release()
+        currentPlayer = null
         super.onDestroy()
     }
 
@@ -58,28 +56,13 @@ class ReceiverService : Service(), ControlServer.CommandHandler {
     override fun onPlay(url: String, positionMs: Long, title: String?, subtitles: List<ControlServer.SubtitleTrack>) {
         scope.launch {
             currentTitle = title
+            currentUrl = url
+            currentPositionMs = positionMs
             subtitleTracks = subtitles
-            ensurePlayer()
-            val p = player ?: return@launch
+            usedVlcFallback = false
 
-            val subtitleConfigs = subtitles.map { sub ->
-                MediaItem.SubtitleConfiguration.Builder(android.net.Uri.parse(sub.url))
-                    .setMimeType(guessSubtitleMime(sub.url))
-                    .setLanguage(sub.lang)
-                    .setLabel(sub.label ?: sub.lang)
-                    .setId(sub.id)
-                    .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
-                    .build()
-            }
-            val mediaItem = MediaItem.Builder()
-                .setUri(url)
-                .setMimeType(guessVideoMime(url))
-                .setSubtitleConfigurations(subtitleConfigs)
-                .build()
-            p.setMediaItem(mediaItem)
-            p.prepare()
-            if (positionMs > 0) p.seekTo(positionMs)
-            p.play()
+            // Try ExoPlayer first (hardware decoding)
+            playWithExoPlayer(url, positionMs)
 
             // Bring the player UI to the front.
             val launchIntent = Intent(this@ReceiverService, ReceiverActivity::class.java).apply {
@@ -90,16 +73,55 @@ class ReceiverService : Service(), ControlServer.CommandHandler {
         }
     }
 
+    private fun playWithExoPlayer(url: String, positionMs: Long) {
+        currentPlayer?.release()
+        currentPlayer = TvExoPlayer(this, this).apply {
+            play(url, positionMs, currentTitle)
+        }
+        Log.i(TAG, "Using ExoPlayer (hardware)")
+    }
+
+    private fun fallbackToVlc() {
+        if (usedVlcFallback) {
+            Log.e(TAG, "VLC also failed, giving up")
+            return
+        }
+        usedVlcFallback = true
+        val url = currentUrl ?: return
+        val pos = currentPlayer?.getPositionMs() ?: currentPositionMs
+        Log.i(TAG, "Falling back to VLC (software) at ${pos}ms")
+        currentPlayer?.release()
+        currentPlayer = TvVlcPlayer(this, this).apply {
+            // Note: VLC video layout must be attached by the activity
+            play(url, pos, currentTitle)
+        }
+    }
+
+    // TvPlayerCallback
+    override fun onCodecError(error: TvCodecError) {
+        Log.w(TAG, "Codec error (${error.mimeType}): ${error.message}")
+        // If ExoPlayer failed and we haven't tried VLC yet, fallback
+        if (currentPlayer?.isSoftwareDecoder == false) {
+            fallbackToVlc()
+        } else {
+            Log.e(TAG, "All players failed")
+        }
+    }
+
+    override fun onPlaybackEnded() {
+        Log.i(TAG, "Playback ended")
+    }
+
     override fun onPause() {
-        player?.pause()
+        currentPlayer?.pause()
     }
 
     override fun onResume() {
-        player?.play()
+        currentPlayer?.resume()
     }
 
     override fun onSeek(positionMs: Long) {
-        player?.seekTo(positionMs)
+        currentPlayer?.seekTo(positionMs)
     }
 
     override fun onSelectSubtitle(trackId: String?) {
@@ -110,32 +132,22 @@ class ReceiverService : Service(), ControlServer.CommandHandler {
     }
 
     override fun onStop() {
-        player?.stop()
-        player?.clearMediaItems()
+        currentPlayer?.stop()
         currentTitle = null
+        currentUrl = null
     }
 
     override fun getStatus(): JSONObject {
-        val p = player
+        val p = currentPlayer
         return JSONObject()
-            .put("positionMs", p?.currentPosition ?: 0)
-            .put("durationMs", p?.duration?.takeIf { it > 0 } ?: 0)
-            .put("isPlaying", p?.isPlaying == true)
+            .put("positionMs", p?.getPositionMs() ?: 0)
+            .put("durationMs", p?.getDurationMs() ?: 0)
+            .put("isPlaying", p?.isPlaying() == true)
             .put("title", currentTitle ?: JSONObject.NULL)
+            .put("player", p?.name ?: JSONObject.NULL)
     }
 
     // ---- internals ----
-
-    private fun ensurePlayer() {
-        if (player != null) return
-        val httpFactory = DefaultHttpDataSource.Factory()
-            .setUserAgent("StremioTvReceiver/1.0")
-            .setAllowCrossProtocolRedirects(true)
-        player = ExoPlayer.Builder(this)
-            .setMediaSourceFactory(DefaultMediaSourceFactory(httpFactory))
-            .build()
-            .also { PlayerHolder.player = it }
-    }
 
     private fun startForegroundNotification() {
         val channelId = "tv_receiver"
@@ -185,5 +197,9 @@ class ReceiverService : Service(), ControlServer.CommandHandler {
 /** Shared handle so the activity can attach the service-owned player to its view. */
 object PlayerHolder {
     @Volatile
-    var player: ExoPlayer? = null
+    var exoPlayer: androidx.media3.exoplayer.ExoPlayer? = null
+    @Volatile
+    var vlcPlayer: TvVlcPlayer? = null
+    @Volatile
+    var vlcVideoLayout: org.videolan.libvlc.util.VLCVideoLayout? = null
 }
