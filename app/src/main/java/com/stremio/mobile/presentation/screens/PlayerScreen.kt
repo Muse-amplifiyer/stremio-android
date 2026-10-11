@@ -86,6 +86,7 @@ import com.stremio.mobile.presentation.screens.player.PlayerControlsState
 import com.stremio.mobile.presentation.screens.player.PlayerGestureOverlays
 import com.stremio.mobile.presentation.screens.player.playerGestures
 import com.stremio.mobile.presentation.screens.player.rememberPlayerGestureState
+import com.stremio.mobile.presentation.screens.player.FireTvDialog
 import com.stremio.mobile.presentation.components.LocalGlassAlpha
 import com.stremio.mobile.presentation.components.LocalGlobalUiTheme
 import com.stremio.mobile.presentation.components.GlobalUiTheme
