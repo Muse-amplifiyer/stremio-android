@@ -12,6 +12,10 @@ android {
         targetSdk = 37
         versionCode = 1
         versionName = "1.0.0"
+        ndk {
+            // Fire TV Stick 4K Max is arm64; skip other ABIs to slim APK
+            abiFilters += "arm64-v8a"
+        }
     }
 
     buildTypes {

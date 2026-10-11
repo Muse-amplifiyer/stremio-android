@@ -1532,12 +1532,36 @@ class MainViewModel(
      * an unsupported codec (e.g. TrueHD Atmos) that MPV can software-decode.
      */
     fun retryWithMpv() {
-        val option = lastPlayedOption ?: return
-        if (!playerOpen.value) return
-        if (playbackRepository.getPlayer()?.engine == PlayerEngine.MPV) return
-        val position = playbackRepository.getPlayer()?.runtimeState?.value?.positionMs ?: 0L
+        val option = lastPlayedOption
+        if (option == null) {
+            Timber.w("retryWithMpv: no lastPlayedOption")
+            return
+        }
+        if (!playerOpen.value) {
+            Timber.w("retryWithMpv: player not open")
+            return
+        }
+        val currentEngine = try {
+            playbackRepository.getPlayer()?.engine
+        } catch (e: Exception) {
+            Timber.w("retryWithMpv: failed to get engine: ${e.message}")
+            null
+        }
+        if (currentEngine == PlayerEngine.MPV) {
+            Timber.i("retryWithMpv: already on MPV, skipping")
+            return
+        }
+        val position = try {
+            playbackRepository.getPlayer()?.runtimeState?.value?.positionMs ?: 0L
+        } catch (e: Exception) {
+            0L
+        }
         Timber.i("ExoPlayer codec failure; retrying with MPV at ${position}ms")
-        switchPlayerEngine(option, PlayerEngine.MPV, position)
+        try {
+            switchPlayerEngine(option, PlayerEngine.MPV, position)
+        } catch (e: Exception) {
+            Timber.e("retryWithMpv: switch failed: ${e.message}")
+        }
     }
 
     /**

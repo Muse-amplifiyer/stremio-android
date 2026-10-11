@@ -72,6 +72,7 @@ fun PlayerSettingsScreen(
             val playerEngines = listOf(
                 PlayerEngine.EXO.profileValue to "ExoPlayer",
                 PlayerEngine.MPV.profileValue to "MPV",
+                PlayerEngine.VLC.profileValue to "VLC",
             )
 
             val playerUiStyles = listOf(

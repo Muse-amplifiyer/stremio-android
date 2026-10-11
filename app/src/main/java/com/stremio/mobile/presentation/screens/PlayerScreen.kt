@@ -789,9 +789,20 @@ fun PlayerScreen(
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         ThemedButton(text = "Back", onClick = onBack)
                         if (isCodecError) {
-                            // Show switching indicator while auto-switch happens
+                            // Manual fallback button (auto-switch also attempts)
+                            ThemedButton(
+                                text = "MPV",
+                                onClick = {
+                                    playbackError = null
+                                    when (getCurrentEngine()) {
+                                        com.stremio.mobile.player.PlayerEngine.MPV -> onRetryWithVlc()
+                                        com.stremio.mobile.player.PlayerEngine.VLC -> player?.retry()
+                                        else -> onRetryWithMpv()
+                                    }
+                                },
+                            )
                             androidx.compose.material3.Text(
-                                "Switching to MPV...",
+                                "Auto-switching...",
                                 color = Color.White.copy(alpha = 0.7f),
                                 fontSize = 13.sp,
                             )
