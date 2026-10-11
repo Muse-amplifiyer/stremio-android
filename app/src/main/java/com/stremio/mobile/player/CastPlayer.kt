@@ -17,6 +17,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -212,13 +213,13 @@ class CastPlayer(
     override fun selectSubtitleTrack(id: String) {
         val trackId = trackIdBySubtitleId[id] ?: return
         selectedSubtitleId = id
-        runCatching { client()?.setActiveTrackIds(longArrayOf(trackId)) }
+        runCatching { client()?.setActiveMediaTracks(longArrayOf(trackId)) }
         mutableState.value = mutableState.value.copy(subtitlesDisabled = false)
     }
 
     override fun disableSubtitles() {
         selectedSubtitleId = null
-        runCatching { client()?.setActiveTrackIds(longArrayOf()) }
+        runCatching { client()?.setActiveMediaTracks(longArrayOf()) }
         mutableState.value = mutableState.value.copy(subtitlesDisabled = true)
     }
 
