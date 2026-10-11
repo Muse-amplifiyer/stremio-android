@@ -10,7 +10,7 @@ import com.google.android.gms.cast.MediaInfo
 import com.google.android.gms.cast.MediaLoadRequestData
 import com.google.android.gms.cast.MediaMetadata
 import com.google.android.gms.cast.MediaTrack
-import com.google.android.gms.cast.framework.media.MediaError
+import com.google.android.gms.cast.MediaError
 import com.google.android.gms.cast.framework.media.RemoteMediaClient
 import com.stremio.mobile.cast.CastManager
 import kotlinx.coroutines.CoroutineScope
