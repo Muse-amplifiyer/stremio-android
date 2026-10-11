@@ -1476,6 +1476,24 @@ class MainViewModel(
         switchPlayerEngine(option, engine, position)
     }
 
+    private fun switchPlayerEngine(option: StreamOption, engine: PlayerEngine, startPositionMs: Long) {
+        playJob?.cancel()
+        playJob = viewModelScope.launch {
+            val loaded = playbackRepository.resolveAndLoadStream(
+                option = option,
+                engine = engine,
+                displayTitle = playbackDisplayTitle(),
+                startPositionOverride = startPositionMs,
+            )
+            if (!loaded) {
+                streams.value = streams.value.copy(
+                    isResolving = false,
+                    error = "Could not switch playback device.",
+                )
+            }
+        }
+    }
+
     // endregion Fire TV -------------------------------------------------------------------
 
     private fun rememberLocalStreamSelection(option: StreamOption) {
